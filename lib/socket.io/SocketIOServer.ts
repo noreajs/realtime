@@ -1,0 +1,146 @@
+import {
+  ISocketIOServerConstructorType,
+  INamespaceMethodParamsType,
+} from "./interfaces";
+import socketIo, { Server, Socket, ServerOptions } from "socket.io";
+import http from "http";
+import https from "https";
+
+class SocketIOServer {
+  static readonly DEFAULT_NAMESPACE_NAME = "/";
+  private io: Server;
+  private namespaces?: {
+    [key: string]: socketIo.Namespace;
+  };
+  private globalMiddlewares?: Array<
+    (socket: Socket, fn: (err?: any) => void) => Promise<void> | void
+  >;
+
+  constructor(params?: ISocketIOServerConstructorType) {
+    // create a socket.io server
+    this.io = params?.server
+      ? socketIo(params.server, params.options)
+      : socketIo(params?.options);
+
+    // global middlewares
+    this.globalMiddlewares = params?.globalMiddlewares;
+
+    // origins
+    this.io.origins(
+      (
+        origin: string,
+        callback: (error: string | null, success: boolean) => void
+      ) => {
+        if (
+          !params?.allowedOrigins ||
+          (params.allowedOrigins.length === 0 &&
+            params.allowedOrigins.includes(origin))
+        ) {
+          callback(null, true);
+        } else {
+          callback(`The origin ${origin} is not allowed.`, false);
+        }
+      }
+    );
+  }
+
+  /**
+   * Attach the socket server to the http or https server instance
+   * @param server HTTP or HTTPS server
+   * @param opts socket server options
+   */
+  attach(
+    server: http.Server | https.Server,
+    opts?: ServerOptions
+  ): SocketIOServer {
+    this.io.attach(server, opts);
+    return this;
+  }
+
+  /**
+   * Get the socket.io server
+   */
+  getServer() {
+    return this.io;
+  }
+
+  /**
+   * Get initiated namespaces
+   */
+  getNamespaces() {
+    return this.namespaces;
+  }
+
+  /**
+   * Get a namespace by his path
+   * @param path path of the namespace
+   */
+  getNamespace(path?: string) {
+    if (this.namespaces) {
+      return this.namespaces[path ?? SocketIOServer.DEFAULT_NAMESPACE_NAME];
+    } else {
+      return undefined;
+    }
+  }
+
+  /**
+   * Initialize a namespace
+   * @param params parameters
+   */
+  namespace<UserType>(params: INamespaceMethodParamsType<UserType>) {
+    // namespace path
+    const path = params.name ?? SocketIOServer.DEFAULT_NAMESPACE_NAME;
+
+    // namespace name must start by /
+    if (!path.startsWith(SocketIOServer.DEFAULT_NAMESPACE_NAME)) {
+      throw Error("The namespace name is a path and must start with /");
+    }
+
+    // check if the namespace with this name is already defined
+    if (this.namespaces && Object.keys(this.namespaces).includes(path)) {
+      throw Error(`Namespace ${path} has already been defined.`);
+    }
+
+    // init namespace
+    let namespace = this.io.of(path);
+
+    // inject global middlewares
+    if (this.globalMiddlewares) {
+      for (const middleware of this.globalMiddlewares) {
+        namespace.use(middleware);
+      }
+    }
+
+    // inject middlewares
+    if (params.middlewares) {
+      for (const middleware of params.middlewares) {
+        namespace.use(middleware);
+      }
+    }
+
+    // open
+    namespace.on("connect", (socket: Socket) => {
+      // on connect
+      params.onConnect(this.io, namespace, socket);
+
+      // on disconnect
+      socket.on("disconnect", (reason) => {
+        params.onDisconnect(this.io, namespace, socket, reason);
+      });
+    });
+
+    // set the namespace
+    if (this.namespaces) {
+      this.namespaces[path] = namespace;
+    } else {
+      this.namespaces = {
+        path: namespace,
+      };
+    }
+
+    // return the socket io
+    return this;
+  }
+}
+
+export default SocketIOServer;

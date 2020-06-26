@@ -1,0 +1,40 @@
+{
+  "name": "@noreajs/realtime",
+  "version": "0.0.0",
+  "description": "Realtime tools for Node.js applications",
+  "main": "dist/index.js",
+  "directories": {
+    "lib": "dist"
+  },
+  "scripts": {
+    "start": "tsc && node dist/test-server/run.js",
+    "test": "echo \"No test specified\"",
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noreajs/realtime.git"
+  },
+  "keywords": [
+    "socket.io",
+    "norea.js",
+    "realtime",
+    "norea"
+  ],
+  "author": "Arnold LAMBOU",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/noreajs/realtime/issues"
+  },
+  "homepage": "https://github.com/noreajs/realtime#readme",
+  "devDependencies": {
+    "@noreajs/core": "^1.1.1",
+    "@types/typescript": "^2.0.0",
+    "typescript": "^3.9.5"
+  },
+  "dependencies": {
+    "@types/socket.io": "^2.1.8",
+    "socket.io": "^2.3.0"
+  }
+}
