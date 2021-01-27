@@ -2,7 +2,7 @@ import {
   ISocketIOServerConstructorType,
   INamespaceMethodParamsType,
 } from "./interfaces";
-import socketIo, { Server, Socket, ServerOptions } from "socket.io";
+import { Server, Socket, ServerOptions, Namespace } from "socket.io";
 import http from "http";
 import https from "https";
 
@@ -10,7 +10,7 @@ class SocketIOServer {
   static readonly DEFAULT_NAMESPACE_NAME = "/";
   private io: Server;
   private namespaces?: {
-    [key: string]: socketIo.Namespace;
+    [key: string]: Namespace;
   };
   private globalMiddlewares?: Array<
     (socket: Socket, fn: (err?: any) => void) => Promise<void> | void
@@ -19,29 +19,11 @@ class SocketIOServer {
   constructor(params?: ISocketIOServerConstructorType) {
     // create a socket.io server
     this.io = params?.server
-      ? socketIo(params.server, params.options)
-      : socketIo(params?.options);
+      ? new Server(params.server, params.options)
+      : new Server(params?.options);
 
     // global middlewares
     this.globalMiddlewares = params?.globalMiddlewares;
-
-    // origins
-    this.io.origins(
-      (
-        origin: string,
-        callback: (error: string | null, success: boolean) => void
-      ) => {
-        if (
-          !params?.allowedOrigins ||
-          (params.allowedOrigins.length === 0 &&
-            params.allowedOrigins.includes(origin))
-        ) {
-          callback(null, true);
-        } else {
-          callback(`The origin ${origin} is not allowed.`, false);
-        }
-      }
-    );
   }
 
   /**
@@ -119,7 +101,7 @@ class SocketIOServer {
     }
 
     // open
-    namespace.on("connect", (socket: Socket) => {
+    namespace.on("connection", (socket: Socket) => {
       // on connect
       params.onConnect(this.io, namespace, socket);
 

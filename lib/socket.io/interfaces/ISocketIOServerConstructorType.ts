@@ -13,12 +13,7 @@ export default interface ISocketIOServerConstructorType {
   /**
    * Socket.io server options
    */
-  options?: ServerOptions;
-
-  /**
-   * Allowed origins
-   */
-  allowedOrigins?: string[];
+  options?: Partial<ServerOptions>;
 
   /**
    * Global middelwares to be applied to each connection whatever the namespace

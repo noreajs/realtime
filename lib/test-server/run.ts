@@ -10,10 +10,21 @@ const httpServer = http.createServer(app);
 /**
  * Socket.io server initialization
  */
-const socketIoServer = new SocketIOServer({ server: httpServer }).namespace({
+const socketIoServer = new SocketIOServer({
+  server: httpServer,
+  options: {
+    cors: {
+      origin: "*",
+      allowedHeaders: ["x-token"],
+      credentials: false,
+    },
+  },
+}).namespace({
+  name: "/main",
   middlewares: [
     async (socket, fn) => {
-      console.log("Here a middleware!");
+
+      console.log("Here a middleware!", (socket.handshake.headers as any)["x-token"]);
       // always call fn at the end of a middleware
       fn();
     },
@@ -39,22 +50,22 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/", function (req, res) {
+app.get("/", async function (req, res) {
   if (res.locals.socketServer) {
     /**
      * Get socket.io Server in a request
      */
     const socketIoServer = res.locals.socketServer as Server;
-    socketIoServer.clients((err: any, clients: string[]) => {
-      if (err) {
-        res.status(500).json(err);
-      } else {
-        res.status(200).send(`Hello world! ${clients.length} users online!!`);
-      }
-    });
+
+    const clientsCount = await socketIoServer.allSockets();
+    return res
+      .status(200)
+      .send(`Hello world! ${clientsCount.size} users online!!`);
   } else {
     res.send("Hello World");
   }
 });
 
-httpServer.listen(3000);
+httpServer.listen(3030);
+
+console.log("Runing on ", 3030);
