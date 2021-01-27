@@ -6,7 +6,7 @@ import { Server, Socket, ServerOptions, Namespace } from "socket.io";
 import http from "http";
 import https from "https";
 
-class SocketIOServer {
+export default class SocketIOServer {
   static readonly DEFAULT_NAMESPACE_NAME = "/";
   private io: Server;
   private namespaces?: {
@@ -124,5 +124,3 @@ class SocketIOServer {
     return this;
   }
 }
-
-export default SocketIOServer;
