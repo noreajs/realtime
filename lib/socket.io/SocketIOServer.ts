@@ -100,7 +100,33 @@ export default class SocketIOServer {
       }
     }
 
-    // open
+    /**
+     * Room events
+     * -------------------
+     */
+    // room was created
+    namespace.adapter.on("create-room", (room) => {
+      params.onCreateRoom?.(room);
+    });
+
+    // room was deleted
+    namespace.adapter.on("delete-room", (room) => {
+      params.onDeleteRoom?.(room);
+    });
+
+    // room was joined
+    namespace.adapter.on("join-room", (room, id) => {
+      params.onJoinRoom?.(room, id);
+    });
+
+    // room was leaved
+    namespace.adapter.on("leave-room", (room, id) => {
+      params.onLeaveRoom?.(room, id);
+    });
+
+    /**
+     * Connection & disconnection
+     */
     namespace.on("connection", (socket: Socket) => {
       // on connect
       params.onConnect?.(this.io, namespace, socket);

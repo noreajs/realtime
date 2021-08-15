@@ -1,5 +1,5 @@
+import { Namespace, Server } from "socket.io";
 import NoreaSocket from "./NoreaSocket";
-import { Server, Namespace } from "socket.io";
 
 export default interface INamespaceMethodParamsType<UserType> {
   /**
@@ -16,6 +16,32 @@ export default interface INamespaceMethodParamsType<UserType> {
       fn: (err?: any) => void
     ) => Promise<void> | void
   >;
+
+  /**
+   * This method is called when a room is created
+   * @param room created room
+   */
+  onCreateRoom?: (room: string) => Promise<void> | void;
+
+  /**
+   * This method is called when a room is deleted
+   * @param room deleted room
+   */
+  onDeleteRoom?: (room: string) => Promise<void> | void;
+
+  /**
+   * This method is called when a client join a room
+   * @param room joined room
+   * @param id socket id of the client
+   */
+  onJoinRoom?: (room: string, id: string) => Promise<void> | void;
+
+  /**
+   * This method is called when a client leave a room
+   * @param room leaved room
+   * @param id socket id of the client
+   */
+  onLeaveRoom?: (room: string, id: string) => Promise<void> | void;
 
   /**
    * This method is called after each connection
