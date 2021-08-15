@@ -1,4 +1,5 @@
 import { Namespace, Server } from "socket.io";
+import { Adapter } from "socket.io-adapter";
 import NoreaSocket from "./NoreaSocket";
 
 export default interface INamespaceMethodParamsType<UserType> {
@@ -16,6 +17,12 @@ export default interface INamespaceMethodParamsType<UserType> {
       fn: (err?: any) => void
     ) => Promise<void> | void
   >;
+
+  /**
+   * Adapter injection
+   * @param adapter namespace adapter
+   */
+  adapter?: (adapter: Adapter) => Promise<void> | void;
 
   /**
    * This method is called when a room is created

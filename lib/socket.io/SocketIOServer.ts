@@ -101,6 +101,11 @@ export default class SocketIOServer {
     }
 
     /**
+     * Inject adapter injection
+     */
+    params.adapter?.(namespace.adapter);
+
+    /**
      * Room events
      * -------------------
      */
