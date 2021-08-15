@@ -18,27 +18,42 @@ export default interface INamespaceMethodParamsType<UserType> {
   >;
 
   /**
-   * This method is called at each connection
-   * 
+   * This method is called after each connection
+   *
    * @param io - Socket.io Server
    * @param nsp - Namespace
    * @param socket - Socket instance
    */
-  onConnect: (
+  onConnect?: (
     io: Server,
     nsp: Namespace,
     socket: NoreaSocket<UserType>
   ) => Promise<void> | void;
 
   /**
-   * This method is called at each deconnection
-   * 
+   * This method is called before each deconnection
+   *
    * @param io - Socket.io Server
    * @param nsp - Namespace
    * @param socket - Socket instance
    * @param reason - reason of deconnection
    */
-  onDisconnect: (
+  onDisconnecting?: (
+    io: Server,
+    nsp: Namespace,
+    socket: NoreaSocket<UserType>,
+    reason: any
+  ) => Promise<void> | void;
+
+  /**
+   * This method is called after each deconnection
+   *
+   * @param io - Socket.io Server
+   * @param nsp - Namespace
+   * @param socket - Socket instance
+   * @param reason - reason of deconnection
+   */
+  onDisconnect?: (
     io: Server,
     nsp: Namespace,
     socket: NoreaSocket<UserType>,

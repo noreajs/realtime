@@ -103,11 +103,16 @@ export default class SocketIOServer {
     // open
     namespace.on("connection", (socket: Socket) => {
       // on connect
-      params.onConnect(this.io, namespace, socket);
+      params.onConnect?.(this.io, namespace, socket);
+
+      // on disconnecting
+      socket.on("disconnecting", (reason) => {
+        params.onDisconnecting?.(this.io, namespace, socket, reason);
+      });
 
       // on disconnect
       socket.on("disconnect", (reason) => {
-        params.onDisconnect(this.io, namespace, socket, reason);
+        params.onDisconnect?.(this.io, namespace, socket, reason);
       });
     });
 
