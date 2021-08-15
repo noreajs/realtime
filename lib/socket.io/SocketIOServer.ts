@@ -110,22 +110,22 @@ export default class SocketIOServer {
      * -------------------
      */
     // room was created
-    namespace.adapter.on("create-room", (room) => {
+    namespace.adapter.on("create-room", (room: string) => {
       params.onCreateRoom?.(room);
     });
 
     // room was deleted
-    namespace.adapter.on("delete-room", (room) => {
+    namespace.adapter.on("delete-room", (room: string) => {
       params.onDeleteRoom?.(room);
     });
 
     // room was joined
-    namespace.adapter.on("join-room", (room, id) => {
+    namespace.adapter.on("join-room", (room: string, id: string) => {
       params.onJoinRoom?.(room, id);
     });
 
     // room was leaved
-    namespace.adapter.on("leave-room", (room, id) => {
+    namespace.adapter.on("leave-room", (room: string, id: string) => {
       params.onLeaveRoom?.(room, id);
     });
 
@@ -138,6 +138,9 @@ export default class SocketIOServer {
 
       // on disconnecting
       socket.on("disconnecting", (reason) => {
+        // inject current socket rooms
+        (socket as any).disconnectingRooms = socket.rooms;
+
         params.onDisconnecting?.(this.io, namespace, socket, reason);
       });
 
