@@ -82,13 +82,53 @@ export default class SocketIOServer {
     return this.socketServer.of(nsp).adapter.sockets(new Set([room]));
   }
 
+  /**
+   * Emit the event to all members of the room
+   *
+   * @param nsp namespace name
+   * @param room targeted room
+   * @param event event
+   * @param args arguments
+   * @returns Promise<number>
+   */
   async emitToRoom(
     nsp: string,
     room: string,
     event: string | symbol,
     ...args: any[]
   ): Promise<number> {
-    const sockets = await this.getRoomSockets(room, nsp);
+    const sockets = await this.getRoomSockets(nsp, room);
+    for (const socketId of sockets) {
+      this.socketServer.to(socketId).emit(event, ...args);
+    }
+    return sockets.size;
+  }
+
+  /**
+   * Get room's sockets in a room
+   * @param nsp namespace name
+   * @param rooms set of rooms
+   */
+  async getRoomsSockets(nsp: string, rooms: Set<string>): Promise<Set<string>> {
+    return this.socketServer.of(nsp).adapter.sockets(rooms);
+  }
+
+  /**
+   * Emit the event to many rooms's members
+   *
+   * @param nsp namespace
+   * @param rooms set of rooms
+   * @param event event
+   * @param args arguments
+   * @returns Promise<number>
+   */
+  async emitToRooms(
+    nsp: string,
+    rooms: Set<string>,
+    event: string | symbol,
+    ...args: any[]
+  ): Promise<number> {
+    const sockets = await this.getRoomsSockets(nsp, rooms);
     for (const socketId of sockets) {
       this.socketServer.to(socketId).emit(event, ...args);
     }
