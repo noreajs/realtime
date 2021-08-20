@@ -8,7 +8,7 @@ import https from "https";
 
 export default class SocketIOServer {
   static readonly DEFAULT_NAMESPACE_NAME = "/";
-  private io: Server;
+  private socketServer: Server;
   private namespaces?: {
     [key: string]: Namespace;
   };
@@ -18,7 +18,7 @@ export default class SocketIOServer {
 
   constructor(params?: ISocketIOServerConstructorType) {
     // create a socket.io server
-    this.io = params?.server
+    this.socketServer = params?.server
       ? new Server(params.server, params.options)
       : new Server(params?.options);
 
@@ -35,7 +35,7 @@ export default class SocketIOServer {
     server: http.Server | https.Server,
     opts?: ServerOptions
   ): SocketIOServer {
-    this.io.attach(server, opts);
+    this.socketServer.attach(server, opts);
     return this;
   }
 
@@ -43,7 +43,15 @@ export default class SocketIOServer {
    * Get the socket.io server
    */
   getServer() {
-    return this.io;
+    return this.socketServer;
+  }
+
+  /**
+   * Get socket.io server
+   * @returns SocketIOServer.socketServer
+   */
+  io() {
+    return this.socketServer;
   }
 
   /**
@@ -66,6 +74,28 @@ export default class SocketIOServer {
   }
 
   /**
+   * Get room's sockets in a room
+   * @param nsp namespace name
+   * @param room targeted room
+   */
+  async getRoomSockets(nsp: string, room: string): Promise<Set<string>> {
+    return this.socketServer.of(nsp).adapter.sockets(new Set([room]));
+  }
+
+  async emitToRoom(
+    nsp: string,
+    room: string,
+    event: string | symbol,
+    ...args: any[]
+  ): Promise<number> {
+    const sockets = await this.getRoomSockets(room, nsp);
+    for (const socketId of sockets) {
+      this.socketServer.to(socketId).emit(event, ...args);
+    }
+    return sockets.size;
+  }
+
+  /**
    * Initialize a namespace
    * @param params parameters
    */
@@ -84,78 +114,92 @@ export default class SocketIOServer {
     }
 
     // init namespace
-    let namespace = this.io.of(path);
+    this.socketServer.of(path);
 
     // inject global middlewares
     if (this.globalMiddlewares) {
       for (const middleware of this.globalMiddlewares) {
-        namespace.use(middleware);
+        this.socketServer.of(path).use(middleware);
       }
     }
 
     // inject middlewares
     if (params.middlewares) {
       for (const middleware of params.middlewares) {
-        namespace.use(middleware);
+        this.socketServer.of(path).use(middleware);
       }
     }
 
     /**
      * Inject adapter injection
      */
-    params.adapter?.(namespace.adapter);
+    params.adapter?.(this.socketServer.of(path).adapter);
 
     /**
      * Room events
      * -------------------
      */
     // room was created
-    namespace.adapter.on("create-room", (room: string) => {
+    this.socketServer.of(path).adapter.on("create-room", (room: string) => {
       params.onCreateRoom?.(room);
     });
 
     // room was deleted
-    namespace.adapter.on("delete-room", (room: string) => {
+    this.socketServer.of(path).adapter.on("delete-room", (room: string) => {
       params.onDeleteRoom?.(room);
     });
 
     // room was joined
-    namespace.adapter.on("join-room", (room: string, id: string) => {
-      params.onJoinRoom?.(room, id);
-    });
+    this.socketServer
+      .of(path)
+      .adapter.on("join-room", (room: string, id: string) => {
+        params.onJoinRoom?.(room, id);
+      });
 
     // room was leaved
-    namespace.adapter.on("leave-room", (room: string, id: string) => {
-      params.onLeaveRoom?.(room, id);
-    });
+    this.socketServer
+      .of(path)
+      .adapter.on("leave-room", (room: string, id: string) => {
+        params.onLeaveRoom?.(room, id);
+      });
 
     /**
      * Connection & disconnection
      */
-    namespace.on("connection", (socket: Socket) => {
+    this.socketServer.of(path).on("connection", (socket: Socket) => {
       // on connect
-      params.onConnect?.(this.io, namespace, socket);
+      params.onConnect?.(this.socketServer, this.socketServer.of(path), socket);
 
       // on disconnecting
       socket.on("disconnecting", (reason) => {
         // inject current socket rooms
         (socket as any).disconnectingRooms = socket.rooms;
 
-        params.onDisconnecting?.(this.io, namespace, socket, reason);
+        params.onDisconnecting?.(
+          this.socketServer,
+          this.socketServer.of(path),
+          socket,
+          reason
+        );
       });
 
       // on disconnect
       socket.on("disconnect", (reason) => {
-        params.onDisconnect?.(this.io, namespace, socket, reason);
+        params.onDisconnect?.(
+          this.socketServer,
+          this.socketServer.of(path),
+          socket,
+          reason
+        );
       });
     });
 
     // set the namespace
     if (this.namespaces) {
-      this.namespaces[path] = namespace;
+      this.namespaces[path] = this.socketServer.of(path);
     } else {
       this.namespaces = {};
-      this.namespaces[path] = namespace;
+      this.namespaces[path] = this.socketServer.of(path);
     }
 
     // return the socket io
