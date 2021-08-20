@@ -99,7 +99,10 @@ export default class SocketIOServer {
   ): Promise<number> {
     const sockets = await this.getRoomSockets(nsp, room);
     for (const socketId of sockets) {
-      this.socketServer.to(socketId).emit(event, ...args);
+      this.socketServer
+        .of(nsp)
+        .to(socketId)
+        .emit(event, ...args);
     }
     return sockets.size;
   }
@@ -130,7 +133,10 @@ export default class SocketIOServer {
   ): Promise<number> {
     const sockets = await this.getRoomsSockets(nsp, rooms);
     for (const socketId of sockets) {
-      this.socketServer.to(socketId).emit(event, ...args);
+      this.socketServer
+        .of(nsp)
+        .to(socketId)
+        .emit(event, ...args);
     }
     return sockets.size;
   }
