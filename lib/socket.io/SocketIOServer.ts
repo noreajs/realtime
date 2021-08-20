@@ -154,9 +154,8 @@ export default class SocketIOServer {
     if (this.namespaces) {
       this.namespaces[path] = namespace;
     } else {
-      this.namespaces = {
-        path: namespace,
-      };
+      this.namespaces = {};
+      this.namespaces[path] = namespace;
     }
 
     // return the socket io
