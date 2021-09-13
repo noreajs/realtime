@@ -94,7 +94,7 @@ export default class SocketIOServer {
   async emitToRoom(
     nsp: string,
     room: string,
-    event: string | symbol,
+    event: string,
     ...args: any[]
   ): Promise<number> {
     const sockets = await this.getRoomSockets(nsp, room);
@@ -128,7 +128,7 @@ export default class SocketIOServer {
   async emitToRooms(
     nsp: string,
     rooms: Set<string>,
-    event: string | symbol,
+    event: string,
     ...args: any[]
   ): Promise<number> {
     const sockets = await this.getRoomsSockets(nsp, rooms);
