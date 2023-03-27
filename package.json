@@ -31,14 +31,15 @@
   "devDependencies": {
     "@noreajs/core": "^1.1.1",
     "@types/socket.io": "^3.0.2",
+    "socket.io": "^4.6.1",
     "typescript": "^3.9.5"
   },
   "dependencies": {
-    "@socket.io/cluster-adapter": "^0.1.0",
-    "socket.io": "^4.2.0"
+    "@socket.io/cluster-adapter": "^0.1.0"
   },
   "peerDependencies": {
-    "@types/socket.io": "^3.0.2"
+    "@types/socket.io": "^3.0.2",
+    "socket.io": "^4.6.1"
   },
   "peerDependenciesMeta": {
     "@types/socket.io": {
